@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi Medan Magnet Kumparan Helmholtz</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #ecf0f1;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+            padding: 30px;
+        }
+        
+        .main-area {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .graph-container {
+            background: #fff;
+            border: 3px solid #95a5a6;
+            border-radius: 10px;
+            padding: 15px;
+            height: 180px;
+        }
+        
+        #graphCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        .visualization {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            border: 3px solid #95a5a6;
+        }
+        
+        #canvas {
+            width: 100%;
+            height: 450px;
+            border-radius: 10px;
+            background: #f8f9fa;
+            display: block;
+        }
+        
+        .probe-control {
+            background: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #bdc3c7;
+        }
+        
+        .probe-control label {
+            display: block;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .slider-container input[type="range"] {
+            flex: 1;
+            height: 10px;
+            background: #3498db;
+            border-radius: 5px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .slider-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            background: #3498db;
+            border: 3px solid #fff;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        
+        .slider-container input[type="range"]::-moz-range-thumb {
+            width: 22px;
+            height: 22px;
+            background: #3498db;
+            border: 3px solid #fff;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        
+        .controls {
+            background: #fff;
+            padding: 25px;
+            border-radius: 15px;
+            border: 2px solid #bdc3c7;
+        }
+        
+        .control-group {
+            margin-bottom: 20px;
+        }
+        
+        .control-group label {
+            display: block;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 1em;
+        }
+        
+        .control-group input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #bdc3c7;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            transition: border-color 0.3s;
+            background: #ecf0f1;
+        }
+        
+        .control-group input[type="number"]:focus {
+            outline: none;
+            border-color: #3498db;
+            background: #fff;
+        }
+        
+        .control-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #bdc3c7;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            background: #ecf0f1;
+            cursor: pointer;
+        }
+        
+        .control-group select:focus {
+            outline: none;
+            border-color: #3498db;
+            background: #fff;
+        }
+        
+        .results {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+            border: 2px solid #bdc3c7;
+        }
+        
+        .results h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1em;
+            font-weight: 700;
+        }
+        
+        .results p {
+            font-size: 0.95em;
+            color: #34495e;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .field-display {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            padding: 25px;
+            border-radius: 15px;
+            color: white;
+            text-align: center;
+            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        
+        .field-display h3 {
+            font-size: 1.1em;
+            opacity: 0.95;
+            margin-bottom: 10px;
+        }
+        
+        .field-display .value {
+            font-size: 2.2em;
+            font-weight: bold;
+        }
+        
+        .formula {
+            background: #fff3cd;
+            border-left: 4px solid #f39c12;
+            padding: 15px;
+            margin: 20px 30px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #7d6608;
+        }
+        
+        @media (max-width: 1024px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚡ Simulasi Kumparan Helmholtz</h1>
+            <p>Pengukuran dan Visualisasi Medan Magnet</p>
+            <p>Tugas Akhir Capstone</p>
+        </div>
+        
+        <div class="content">
+            <div class="main-area">
+                <div class="graph-container">
+                    <canvas id="graphCanvas"></canvas>
+                </div>
+                
+                <div class="visualization">
+                    <canvas id="canvas"></canvas>
+                </div>
+                
+                <div class="probe-control">
+                    <label>Posisi Probe (cm)</label>
+                    <div class="slider-container">
+                        <input type="range" id="probePosition" min="0" max="100" step="0.1" value="50">
+                        <input type="number" style="width: 90px; padding: 10px; border: 2px solid #bdc3c7; border-radius: 5px; text-align: center; font-weight: 600; background: #ecf0f1;" id="probeValue" step="0.1" value="50">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <h2 style="margin-bottom: 20px; color: #2c3e50; font-size: 1.3em;">Parameter Input</h2>
+                
+                <div class="control-group">
+                    <label>Diameter Kumparan (m)</label>
+                    <input type="number" id="diameter" step="0.01" value="0.20" min="0.01">
+                </div>
+                
+                <div class="control-group">
+                    <label>Jarak Antar Kumparan (m)</label>
+                    <input type="number" id="distance" step="0.01" value="0.10" min="0.01">
+                </div>
+                
+                <div class="control-group">
+                    <label>Lilitan per Kumparan</label>
+                    <input type="number" id="turns" step="1" value="100" min="1">
+                </div>
+                
+                <div class="control-group">
+                    <label>Diameter Kawat (mm)</label>
+                    <input type="number" id="wireDiameter" step="0.01" value="0.50" min="0.01">
+                </div>
+                
+                <div class="control-group">
+                    <label>Tegangan (V)</label>
+                    <input type="number" id="voltage" step="0.1" value="12" min="0.1">
+                </div>
+                
+                <div class="control-group">
+                    <label>Arus (A)</label>
+                    <input type="number" id="current" step="0.001" value="1.0" min="0.001">
+                </div>
+                
+                <div class="results">
+                    <h3>Informasi Sistem</h3>
+                    <p><strong>Total Lilitan:</strong> <span id="totalTurns">200</span></p>
+                    <p><strong>Hambatan Total:</strong> <span id="resistance">0</span> Ω</p>
+                    <p><strong>Tegangan Kerja:</strong> <span id="workingVoltage">0</span> V</p>
+                </div>
+                
+                <div class="field-display">
+                    <h3>Medan Magnet di Probe</h3>
+                    <div class="value" id="magneticField">0.00 µT</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="formula">
+            <strong>Rumus Medan Magnet di Tengah Kumparan Helmholtz:</strong><br>
+            B = (8μ₀NI)/(5√5R) dimana μ₀ = 4π×10⁻⁷ T·m/A
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const graphCanvas = document.getElementById('graphCanvas');
+        const graphCtx = graphCanvas.getContext('2d');
+        
+        function resizeCanvas() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            graphCanvas.width = graphCanvas.offsetWidth;
+            graphCanvas.height = graphCanvas.offsetHeight;
+        }
+        resizeCanvas();
+        
+        const mu0 = 4 * Math.PI * 1e-7;
+        const rho_copper = 1.68e-8;
+        
+        const diameterInput = document.getElementById('diameter');
+        const distanceInput = document.getElementById('distance');
+        const turnsInput = document.getElementById('turns');
+        const wireDiameterInput = document.getElementById('wireDiameter');
+        const voltageInput = document.getElementById('voltage');
+        const currentInput = document.getElementById('current');
+        const probePositionInput = document.getElementById('probePosition');
+        const probeValueInput = document.getElementById('probeValue');
+        
+        function calculateMagneticFieldAtPosition(D, N, I, d, position) {
+            const R = D / 2;
+            const separation = d;
+            const z = (position / 100) - 0.5;
+            const z1 = -separation / 2;
+            const z2 = separation / 2;
+            const dist1 = Math.abs(z - z1);
+            const dist2 = Math.abs(z - z2);
+            const r1 = Math.sqrt(dist1 * dist1 + R * R);
+            const B1 = (mu0 * N * I * R * R) / (2 * Math.pow(r1, 3));
+            const r2 = Math.sqrt(dist2 * dist2 + R * R);
+            const B2 = (mu0 * N * I * R * R) / (2 * Math.pow(r2, 3));
+            return B1 + B2;
+        }
+        
+        function calculateParameters() {
+            const D = parseFloat(diameterInput.value);
+            const R = D / 2;
+            const d = parseFloat(distanceInput.value);
+            const N = parseInt(turnsInput.value);
+            const d_wire = parseFloat(wireDiameterInput.value) / 1000;
+            const V = parseFloat(voltageInput.value);
+            const I = parseFloat(currentInput.value);
+            const probePos = parseFloat(probePositionInput.value);
+            
+            const totalN = 2 * N;
+            const wireLength = 2 * N * Math.PI * D;
+            const A_wire = Math.PI * Math.pow(d_wire / 2, 2);
+            const R_total = (rho_copper * wireLength) / A_wire;
+            
+            const B = calculateMagneticFieldAtPosition(D, N, I, d, probePos);
+            
+            return { D, R, d, N, totalN, d_wire, V, I, R_total, B, probePos };
+        }
+        
+        function updateDisplays() {
+            const params = calculateParameters();
+            const workingVoltage = params.I * params.R_total;
+            
+            document.getElementById('totalTurns').textContent = params.totalN;
+            document.getElementById('resistance').textContent = params.R_total.toFixed(2);
+            document.getElementById('workingVoltage').textContent = workingVoltage.toFixed(2);
+            document.getElementById('magneticField').textContent = (params.B * 1e6).toFixed(2) + ' µT';
+        }
+        
+        function drawGraph() {
+            const params = calculateParameters();
+            
+            graphCtx.fillStyle = '#fff';
+            graphCtx.fillRect(0, 0, graphCanvas.width, graphCanvas.height);
+            
+            graphCtx.strokeStyle = '#ddd';
+            graphCtx.lineWidth = 1;
+            for (let i = 0; i <= 10; i++) {
+                const y = (graphCanvas.height / 10) * i;
+                graphCtx.beginPath();
+                graphCtx.moveTo(0, y);
+                graphCtx.lineTo(graphCanvas.width, y);
+                graphCtx.stroke();
+            }
+            
+            graphCtx.strokeStyle = '#e74c3c';
+            graphCtx.lineWidth = 3;
+            graphCtx.beginPath();
+            
+            let maxB = 0;
+            const dataPoints = [];
+            
+            for (let x = 0; x < graphCanvas.width; x++) {
+                const pos = (x / graphCanvas.width) * 100;
+                const B = calculateMagneticFieldAtPosition(params.D, params.N, params.I, params.d, pos);
+                const B_microTesla = B * 1e6;
+                dataPoints.push(B_microTesla);
+                maxB = Math.max(maxB, B_microTesla);
+            }
+            
+            for (let x = 0; x < graphCanvas.width; x++) {
+                const y = graphCanvas.height - (dataPoints[x] / maxB) * graphCanvas.height * 0.85 - 10;
+                if (x === 0) {
+                    graphCtx.moveTo(x, y);
+                } else {
+                    graphCtx.lineTo(x, y);
+                }
+            }
+            graphCtx.stroke();
+            
+            const probeX = (params.probePos / 100) * graphCanvas.width;
+            graphCtx.strokeStyle = '#c0392b';
+            graphCtx.lineWidth = 2;
+            graphCtx.setLineDash([5, 5]);
+            graphCtx.beginPath();
+            graphCtx.moveTo(probeX, 0);
+            graphCtx.lineTo(probeX, graphCanvas.height);
+            graphCtx.stroke();
+            graphCtx.setLineDash([]);
+            
+            graphCtx.fillStyle = '#2c3e50';
+            graphCtx.font = 'bold 13px Arial';
+            graphCtx.fillText('Medan Magnet (µT) vs Posisi (cm)', 10, 18);
+        }
+        
+        function drawCoil(x, y, width, height, turns) {
+            const numLayers = Math.min(Math.floor(turns / 20), 15);
+            
+            for (let layer = numLayers; layer >= 0; layer--) {
+                const layerOffset = layer * 2;
+                const currentWidth = width + layerOffset;
+                const currentHeight = height + layerOffset;
+                const currentX = x - layerOffset / 2;
+                const currentY = y - layerOffset / 2;
+                
+                const gradient = ctx.createLinearGradient(currentX, currentY, currentX, currentY + currentHeight);
+                gradient.addColorStop(0, '#2c1810');
+                gradient.addColorStop(0.3, '#6B4423');
+                gradient.addColorStop(0.5, '#8B5A2B');
+                gradient.addColorStop(0.7, '#6B4423');
+                gradient.addColorStop(1, '#2c1810');
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(currentX, currentY, currentWidth, currentHeight);
+                
+                ctx.strokeStyle = '#1a0f08';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(currentX, currentY, currentWidth, currentHeight);
+            }
+            
+            ctx.strokeStyle = 'rgba(139, 90, 43, 0.6)';
+            ctx.lineWidth = 1;
+            const windingLines = Math.min(turns / 3, 40);
+            for (let i = 0; i < windingLines; i++) {
+                const yPos = y + (height / windingLines) * i;
+                ctx.beginPath();
+                ctx.moveTo(x, yPos);
+                ctx.lineTo(x + width, yPos);
+                ctx.stroke();
+            }
+            
+            ctx.strokeStyle = '#3d2817';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(x, y, width, height);
+        }
+        
+        function drawVisualization() {
+            const params = calculateParameters();
+            
+            ctx.fillStyle = '#f8f9fa';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            
+            const maxD = 1.0;
+            const maxDist = 0.5;
+            const coilHeight = (params.D / maxD) * canvas.height * 0.65;
+            const coilWidth = Math.max(40, coilHeight * 0.15);
+            const visualDistance = (params.d / maxDist) * canvas.width * 0.5;
+            
+            const leftCoilX = centerX - visualDistance/2 - coilWidth/2;
+            const rightCoilX = centerX + visualDistance/2 - coilWidth/2;
+            const coilY = centerY - coilHeight/2;
+            
+            ctx.strokeStyle = '#bdc3c7';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([8, 8]);
+            ctx.beginPath();
+            ctx.moveTo(50, centerY);
+            ctx.lineTo(canvas.width - 50, centerY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            drawCoil(leftCoilX, coilY, coilWidth, coilHeight, params.N);
+            drawCoil(rightCoilX, coilY, coilWidth, coilHeight, params.N);
+            
+            ctx.strokeStyle = '#2980b9';
+            ctx.fillStyle = '#2980b9';
+            ctx.lineWidth = 4;
+            
+            const arrowLeftX = leftCoilX - 50;
+            ctx.beginPath();
+            ctx.moveTo(arrowLeftX, centerY - 50);
+            ctx.lineTo(arrowLeftX, centerY + 10);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(arrowLeftX, centerY + 10);
+            ctx.lineTo(arrowLeftX - 10, centerY - 5);
+            ctx.lineTo(arrowLeftX + 10, centerY - 5);
+            ctx.closePath();
+            ctx.fill();
+            
+            const arrowRightX = rightCoilX + coilWidth + 50;
+            ctx.beginPath();
+            ctx.moveTo(arrowRightX, centerY - 50);
+            ctx.lineTo(arrowRightX, centerY + 10);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(arrowRightX, centerY + 10);
+            ctx.lineTo(arrowRightX - 10, centerY - 5);
+            ctx.lineTo(arrowRightX + 10, centerY - 5);
+            ctx.closePath();
+            ctx.fill();
+            
+            const probeX = 50 + (params.probePos / 100) * (canvas.width - 100);
+            
+            ctx.fillStyle = '#e74c3c';
+            ctx.beginPath();
+            ctx.arc(probeX, centerY, 12, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.strokeStyle = '#e74c3c';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(probeX, centerY - 15);
+            ctx.lineTo(probeX, centerY - 50);
+            ctx.stroke();
+            
+            ctx.fillStyle = '#2c3e50';
+            ctx.font = 'bold 15px Arial';
+            ctx.fillText('Kumparan 1', leftCoilX, coilY + coilHeight + 25);
+            ctx.fillText('Kumparan 2', rightCoilX, coilY + coilHeight + 25);
+            
+            ctx.fillStyle = '#c0392b';
+            ctx.font = 'bold 14px Arial';
+            ctx.fillText('Probe', probeX - 22, centerY - 55);
+            
+            ctx.fillStyle = '#7f8c8d';
+            ctx.font = '13px Arial';
+            ctx.fillText(`${params.N} lilitan`, leftCoilX + 5, coilY + coilHeight + 42);
+            ctx.fillText(`${params.N} lilitan`, rightCoilX + 5, coilY + coilHeight + 42);
+            
+            ctx.strokeStyle = '#95a5a6';
+            ctx.fillStyle = '#95a5a6';
+            ctx.lineWidth = 2;
+            ctx.font = '12px Arial';
+            
+            const dimY = centerY + coilHeight/2 + 65;
+            ctx.beginPath();
+            ctx.moveTo(leftCoilX + coilWidth/2, dimY);
+            ctx.lineTo(rightCoilX + coilWidth/2, dimY);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(leftCoilX + coilWidth/2, dimY - 5);
+            ctx.lineTo(leftCoilX + coilWidth/2, dimY + 5);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(rightCoilX + coilWidth/2, dimY - 5);
+            ctx.lineTo(rightCoilX + coilWidth/2, dimY + 5);
+            ctx.stroke();
+            
+            ctx.fillText(`d = ${params.d.toFixed(2)} m`, centerX - 35, dimY + 20);
+            
+            const dimX = leftCoilX - 50;
+            ctx.beginPath();
+            ctx.moveTo(dimX, coilY);
+            ctx.lineTo(dimX, coilY + coilHeight);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(dimX - 5, coilY);
+            ctx.lineTo(dimX + 5, coilY);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(dimX - 5, coilY + coilHeight);
+            ctx.lineTo(dimX + 5, coilY + coilHeight);
+            ctx.stroke();
+            
+            ctx.fillText(`D = ${params.D.toFixed(2)} m`, dimX - 60, centerY + 5);
+            
+            ctx.fillStyle = '#27ae60';
+            ctx.font = 'bold 17px Arial';
+            ctx.fillText(`B = ${(params.B * 1e6).toFixed(2)} µT`, 15, 30);
+        }
+        
+        function update() {
+            updateDisplays();
+            drawVisualization();
+            drawGraph();
+        }
+        
+        diameterInput.addEventListener('input', update);
+        diameterInput.addEventListener('change', update);
+        distanceInput.addEventListener('input', update);
+        distanceInput.addEventListener('change', update);
+        turnsInput.addEventListener('input', update);
+        turnsInput.addEventListener('change', update);
+        wireDiameterInput.addEventListener('input', update);
+        wireDiameterInput.addEventListener('change', update);
+        voltageInput.addEventListener('input', update);
+        voltageInput.addEventListener('change', update);
+        currentInput.addEventListener('input', update);
+        currentInput.addEventListener('change', update);
+        
+        probePositionInput.addEventListener('input', function() {
+            probeValueInput.value = this.value;
+            update();
+        });
+        
+        probeValueInput.addEventListener('input', function() {
+            probePositionInput.value = this.value;
+            update();
+        });
+        
+        update();
+        
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            update();
+        });
+    </script>
+</body>
+</html>
